@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Receipt Generator",
+    "slug": "receipt-generator",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/receipt_icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "android": {
+      "package": "com.treymurray00.boltexponativewind"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "9296b10d-1708-4cb6-84ec-bba124ab3585"
+      }
+    },
+    "owner": "treymurray00"
+  }
+}
