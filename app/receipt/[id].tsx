@@ -32,15 +32,18 @@ export default function ReceiptDetailScreen() {
   }, [id]);
 
   const handleGoBack = () => {
+    console.log('[ReceiptDetail] Back button pressed');
     router.back();
   };
 
   const handleEdit = () => {
+    console.log('[ReceiptDetail] Edit button pressed');
     if (!receipt) return;
     router.push(`/receipt/edit/${receipt.id}`);
   };
 
   const handleDelete = () => {
+    console.log('[ReceiptDetail] Delete button pressed');
     Alert.alert(
       'Delete Receipt',
       'Are you sure you want to delete this receipt? This action cannot be undone.',
@@ -64,11 +67,12 @@ export default function ReceiptDetailScreen() {
   };
 
   const generatePDF = async () => {
+    console.log('[ReceiptDetail] Share/generatePDF button pressed');
     if (!receipt) return;
 
     try {
       setIsGenerating(true);
-      const html =  await generateReceiptHTML(receipt);
+      const html = await generateReceiptHTML(receipt);
       
       if (Platform.OS === 'web') {
         // For web, open in a new tab
@@ -112,6 +116,44 @@ export default function ReceiptDetailScreen() {
     }
   };
 
+  // Custom button component with improved touch handling for Android
+  const HeaderButton = ({ onPress, children, color = "#1f2937", disabled = false }: { onPress?: () => void; children: React.ReactNode; color?: string; disabled?: boolean }) => {
+    // Wrap the onPress handler to add additional logging and ensure it's called
+    const handlePress = () => {
+      console.log('[HeaderButton] Button pressed directly');
+      if (onPress && !disabled) {
+        onPress();
+      }
+    };
+
+    if (Platform.OS === 'android') {
+      return (
+        <View style={styles.androidButtonContainer}>
+          <TouchableOpacity
+            onPress={handlePress}
+            disabled={disabled}
+            activeOpacity={0.7}
+            style={styles.androidHeaderButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            {children}
+          </TouchableOpacity>
+        </View>
+      );
+    } else {
+      return (
+        <TouchableOpacity 
+          onPress={onPress} 
+          style={styles.headerButton}
+          disabled={disabled}
+          activeOpacity={0.7}
+        >
+          {children}
+        </TouchableOpacity>
+      );
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -135,44 +177,67 @@ export default function ReceiptDetailScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Stack.Screen 
         options={{
-          headerShown: true,
-          headerTitle: () => (
-            <View>
-              <Text style={styles.headerTitle}>{receipt.title}</Text>
-            </View>
-          ),
-          headerLeft: () => (
-            <TouchableOpacity onPress={handleGoBack} style={styles.headerButton}>
-              <ArrowLeft size={24} color="#1f2937" />
-            </TouchableOpacity>
-          ),
-          headerRight: () => (
-            <View style={styles.headerButtons}>
-              <TouchableOpacity 
-                onPress={generatePDF} 
-                style={styles.headerButton}
-                disabled={isGenerating}
-              >
-                {isGenerating ? (
-                  <FileDown size={22} color="#9ca3af" />
-                ) : (
-                  <Share2 size={22} color="#1f2937" />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleEdit} style={styles.headerButton}>
-                <Edit2 size={22} color="#1f2937" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleDelete} style={styles.headerButton}>
-                <Trash2 size={22} color="#ef4444" />
-              </TouchableOpacity>
-            </View>
-          ),
-          headerShadowVisible: false,
-          headerStyle: {
-            backgroundColor: '#ffffff',
-          },
+          headerShown: false,
         }}
       />
+      
+      {/* Custom header */}
+      <View style={styles.customHeader}>
+        <View style={styles.headerLeftContainer}>
+          <TouchableOpacity
+            onPress={handleGoBack}
+            style={styles.headerIconButton}
+            accessibilityRole="button"
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <ArrowLeft size={24} color="#1f2937" />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+            {receipt.title}
+          </Text>
+        </View>
+        
+        <View style={styles.headerRightContainer}>
+          <TouchableOpacity
+            onPress={generatePDF}
+            disabled={isGenerating}
+            style={styles.headerIconButton}
+            accessibilityRole="button"
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            {isGenerating ? (
+              <FileDown size={22} color="#9ca3af" />
+            ) : (
+              <Share2 size={22} color="#1f2937" />
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            onPress={handleEdit}
+            style={styles.headerIconButton}
+            accessibilityRole="button"
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Edit2 size={22} color="#1f2937" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            onPress={handleDelete}
+            style={styles.headerIconButton}
+            accessibilityRole="button"
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Trash2 size={22} color="#ef4444" />
+          </TouchableOpacity>
+        </View>
+      </View>
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <ReceiptDetailView receipt={receipt} />
@@ -186,14 +251,66 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9f9fb',
   },
+  customHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    backgroundColor: '#ffffff',
+    height: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  headerLeftContainer: {
+    width: 60,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  headerRightContainer: {
+    width: 160,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerIconButton: {
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 4,
+    borderRadius: 100,
+    backgroundColor: Platform.OS === 'android' ? '#f5f5f7' : 'transparent',
+  },
   headerTitle: {
     fontFamily: 'Inter-SemiBold',
     fontSize: 18,
     color: '#1f2937',
+    textAlign: 'center',
   },
+  // Keep old styles for compatibility
   headerButton: {
     padding: 8,
     marginHorizontal: 4,
+    minWidth: 40,
+    minHeight: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  androidButtonContainer: {
+    marginHorizontal: 4,
+    overflow: 'hidden',
+    borderRadius: 24,
+  },
+  androidHeaderButton: {
+    minWidth: 48,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 12,
   },
   headerButtons: {
     flexDirection: 'row',

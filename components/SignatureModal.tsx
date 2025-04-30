@@ -15,57 +15,72 @@ export default function SignatureModal({ isVisible, onClose, onSave, initialValu
   const windowHeight = Dimensions.get('window').height;
 
   const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-      <style>
-        body {
-          margin: 0;
-          padding: 0;
-          background: #fff;
-          touch-action: none;
-          overflow: hidden;
-        }
-        .signature-pad {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-          height: 100vh;
-        }
-        canvas {
-          width: 100%;
-          height: 100%;
-          background: #fff;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="signature-pad">
-        <canvas></canvas>
-      </div>
-      <script>
-        const canvas = document.querySelector("canvas");
-        const signaturePad = new SignaturePad(canvas, {
-          backgroundColor: 'rgb(255, 255, 255)',
-          penColor: 'rgb(26, 0, 102)'
-        });
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        touch-action: none;
+        overflow: hidden;
+        height: 100%;
+      }
+      .signature-pad {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        display: block;
+        touch-action: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="signature-pad">
+      <canvas></canvas>
+    </div>
+    <script>
+      const canvas = document.querySelector("canvas");
 
-        ${initialValue ? `signaturePad.fromDataURL("${initialValue}");` : ''}
+      function resizeCanvas() {
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+      }
 
-        window.clearSignature = () => {
-          signaturePad.clear();
-        };
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
 
-        window.getSignature = () => {
-          return signaturePad.isEmpty() ? '' : signaturePad.toDataURL();
-        };
-      </script>
-    </body>
-    </html>
-  `;
+      const signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgb(255, 255, 255)',
+        penColor: 'rgb(26, 0, 102)'
+      });
+
+      ${initialValue ? `signaturePad.fromDataURL("${initialValue}");` : ''}
+
+      window.clearSignature = () => {
+        signaturePad.clear();
+      };
+
+      window.getSignature = () => {
+        return signaturePad.isEmpty() ? '' : signaturePad.toDataURL();
+      };
+    </script>
+  </body>
+  </html>
+`;
+
 
   const handleClear = () => {
     webViewRef.current?.injectJavaScript('window.clearSignature(); true;');
