@@ -6,6 +6,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+.bolt/
 
 # native
 *.orig.*
@@ -32,3 +33,4 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+android/

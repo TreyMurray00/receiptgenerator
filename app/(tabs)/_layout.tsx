@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import Colors from '@/constants/Colors';
-import { Receipt as ReceiptIcon, Plus as PlusIcon, Settings as SettingsIcon } from 'lucide-react-native';
+import { Receipt as ReceiptIcon, Plus as PlusIcon, Settings as SettingsIcon, ChartBar as BarChart } from 'lucide-react-native';
 import { loadSettings } from '@/utils/storage';
 import { useEffect, useState } from 'react';
 
@@ -54,6 +54,13 @@ export default function TabLayout() {
         options={{
           title: 'Create',
           tabBarIcon: ({ color, size }) => <PlusIcon size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{
+          title: 'Analytics',
+          tabBarIcon: ({ color, size }) => <BarChart size={size} color={color} />,
         }}
       />
       <Tabs.Screen

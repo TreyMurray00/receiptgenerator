@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { format } from 'date-fns';
 import { Calendar } from 'lucide-react-native';
 
@@ -11,7 +11,7 @@ interface DatePickerComponentProps {
 export default function DatePickerComponent({ date, onDateChange }: DatePickerComponentProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const formattedDate = format(date, 'MMMM dd, yyyy');
+  const formattedDate = format(date, 'MMM dd, yyyy');
 
   // On web, we use a native date input
   if (Platform.OS === 'web') {
@@ -53,7 +53,6 @@ export default function DatePickerComponent({ date, onDateChange }: DatePickerCo
       style={styles.inputContainer}
       onPress={() => {
         // In a real app, would open the native date picker here
-        // For now, just simulate advancing the date by one day
         const newDate = new Date(date);
         newDate.setDate(newDate.getDate() + 1);
         onDateChange(newDate);
@@ -84,4 +83,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1f2937',
   },
-});
+}); 

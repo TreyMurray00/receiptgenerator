@@ -10,6 +10,8 @@ import { Receipt } from '@/types';
 import EmptyState from '@/components/EmptyState';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
+import { isWithinInterval, parseISO, startOfDay, endOfDay, format } from 'date-fns';
+import DateRangePicker from '@/components/DateRangePicker';
 
 export default function ReceiptsScreen() {
   const router = useRouter();
@@ -17,6 +19,8 @@ export default function ReceiptsScreen() {
   const [filteredReceipts, setFilteredReceipts] = useState<Receipt[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const searchAnimation = new Animated.Value(0);
 
   // Load receipts when the screen is focused
@@ -28,31 +32,47 @@ export default function ReceiptsScreen() {
         const loadedReceipts = await loadReceipts();
         if (isActive) {
           setReceipts(loadedReceipts);
-          setFilteredReceipts(loadedReceipts);
+          filterReceipts(loadedReceipts, searchQuery, startDate, endDate);
         }
       };
 
       fetchReceipts();
 
       return () => {
-        // cleanup: prevent setState on unfocused/unmounted screen
         isActive = false;
       };
     }, [])
   );
 
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredReceipts(receipts);
-    } else {
-      const filtered = receipts.filter(receipt => 
-        receipt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        receipt.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        receipt.items.some(item => item.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filterReceipts = (receipts: Receipt[], query: string, start: Date | null, end: Date | null) => {
+    let filtered = [...receipts];
+
+    // Apply search filter
+    if (query.trim() !== '') {
+      filtered = filtered.filter(receipt => 
+        receipt.title.toLowerCase().includes(query.toLowerCase()) ||
+        receipt.customerName?.toLowerCase().includes(query.toLowerCase()) ||
+        receipt.items.some(item => item.description.toLowerCase().includes(query.toLowerCase()))
       );
-      setFilteredReceipts(filtered);
     }
-  }, [searchQuery, receipts]);
+
+    // Apply date filter
+    if (start && end) {
+      const startOfRange = startOfDay(start);
+      const endOfRange = endOfDay(end);
+
+      filtered = filtered.filter(receipt => {
+        const receiptDate = parseISO(receipt.date);
+        return isWithinInterval(receiptDate, { start: startOfRange, end: endOfRange });
+      });
+    }
+
+    setFilteredReceipts(filtered);
+  };
+
+  useEffect(() => {
+    filterReceipts(receipts, searchQuery, startDate, endDate);
+  }, [searchQuery, startDate, endDate, receipts]);
 
   const toggleSearch = () => {
     const toValue = isSearchVisible ? 0 : 1;
@@ -77,25 +97,20 @@ export default function ReceiptsScreen() {
     router.push(`/receipt/${id}`);
   };
 
+  const clearDateFilter = () => {
+    setStartDate(null);
+    setEndDate(null);
+  };
+
   const searchWidth = searchAnimation.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '85%'],
   });
 
-  const headerOpacity = searchAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 0],
-  });
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        {/* flex column for header */}
         <View style={styles.headerContent}>
-          {/* <Animated.View style={[styles.titleContainer, { opacity: headerOpacity }]}>
-            <Text style={styles.title}>Receipts</Text>
-          </Animated.View> */}
-          
           <View style={styles.headerButtons}>
             <Animated.View style={[styles.searchInputContainer, { width: searchWidth }]}>
               {isSearchVisible && (
@@ -125,11 +140,18 @@ export default function ReceiptsScreen() {
         </View>
       </View>
 
+      <DateRangePicker
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        onClear={clearDateFilter}
+      />
+
       {receipts.length === 0 ? (
         <EmptyState 
           title="No receipts yet" 
           message="Tap the + button to create your first receipt"
-          onActionPress={handleCreateReceipt}
           actionLabel="Create Receipt"
         />
       ) : (
@@ -142,11 +164,15 @@ export default function ReceiptsScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            searchQuery.length > 0 ? (
-              <View style={styles.noResultsContainer}>
-                <Text style={styles.noResultsText}>No receipts found matching "{searchQuery}"</Text>
-              </View>
-            ) : null
+            <View style={styles.noResultsContainer}>
+              <Text style={styles.noResultsText}>
+                {startDate && endDate
+                  ? `No receipts found between ${format(startDate, 'MMM dd, yyyy')} and ${format(endDate, 'MMM dd, yyyy')}`
+                  : searchQuery.length > 0
+                  ? `No receipts found matching "${searchQuery}"`
+                  : 'No receipts found'}
+              </Text>
+            </View>
           }
         />
       )}
@@ -155,11 +181,6 @@ export default function ReceiptsScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerContent: {
-    flex: 6,                         // fill available space in the row
-    flexDirection: 'column',        // stack title above buttons :contentReference[oaicite:1]{index=1}
-    justifyContent: 'center',       // vertically center within header height
-  },
   container: {
     flex: 1,
     backgroundColor: '#f9f9fb',
@@ -174,14 +195,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f5',
   },
-  titleContainer: {
-    alignItems: 'flex-start',
+  headerContent: {
+    flex: 6,
+    flexDirection: 'column',
     justifyContent: 'center',
-  },
-  title: {
-    fontFamily: 'Inter-Bold',
-    fontSize: 22,
-    color: '#1f2937',
   },
   headerButtons: {
     flexDirection: 'row',
