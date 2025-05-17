@@ -2,7 +2,7 @@
   "expo": {
     "name": "Receipt Generator",
     "slug": "receipt-generator",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/receipt_icon.png",
     "scheme": "myapp",
